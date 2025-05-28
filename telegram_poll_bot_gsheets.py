@@ -121,7 +121,7 @@ async def receive_poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE
 
 def main() -> None:
     """Run the bot."""
-    token = os.getenv("7760430928:AAFgCHYxnyLC3TKbJawWSPqfsb5KX5uig2g")
+    token = os.getenv("YOUR_BOT_TOKEN")
     if not token:
         raise RuntimeError("Bot token not found in environment variable YOUR_BOT_TOKEN")
     
