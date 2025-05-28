@@ -1,5 +1,6 @@
 import os
 import logging
+import time
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application,
@@ -8,6 +9,7 @@ from telegram.ext import (
     PollAnswerHandler,
     ContextTypes,
 )
+from telegram.error import Conflict
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -69,17 +71,17 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     branch = query.data
     context.user_data["branch"] = branch
 
-    question = "በሚመሯችሁ ኃላፊዎች ምን ያህል ደስተኛ ነህ/ሽ"
+    question = "በሚመሯችሁ ኃላፊዎች መንገድ ምን ያፈ ደስተኛ ነህ/ሽ"
     options = [
-        "በጣም ደስተኛ ነኝ",
-        "ደስተኛ ነኝ",
-        "ደህና ነኝ",
-        "ደስተኛ አይደለሁም",
+        "በጣም ደስተኛ ነ",
+        "ደስተኛ ነ",
+        "ደህና ነ",
+        "ደስ�ተ አይደለም",
     ]
     poll = await query.message.reply_poll(
         question=question,
         options=options,
-        is_anonymous=False,
+        is_anonymous=True,
         allows_multiple_answers=False,
     )
     # Store poll options and creation time
@@ -96,10 +98,10 @@ async def receive_poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE
     option_ids = answer.option_ids
     branch = context.user_data.get("branch", "Unknown")
 
-    username = user.username if user.username else str(user.id)
-    selected_answer = context.bot_data.get(poll_id, {}).get("options", {}).get(option_ids[0], "Unknown")
+    username = user.username if user else "Anonymous"
+    selected_answer = context.bot_data.get(poll_id, {}).get("options", {}).get(option_ids[0], "Pending")
     
-    # Use poll creation time or current time in EAT if effective_message is None
+    # Use poll creation time or current time in EAT
     timestamp = context.bot_data.get(poll_id, {}).get("created_at")
     if not timestamp:
         timestamp = datetime.now(timezone(timedelta(hours=3))).strftime("%Y-%m-%d %H:%M:%S")
@@ -125,18 +127,31 @@ async def receive_poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE
         logger.error(f"Error appending to Google Sheet: {e}")
 
 def main() -> None:
-    """Run the bot."""
+    """Run the bot with retry logic for conflicts."""
     token = os.getenv("YOUR_BOT_TOKEN")
     if not token:
         raise RuntimeError("Bot token not found in environment variable YOUR_BOT_TOKEN")
     
-    application = Application.builder().token(token).build()
+    max_retries = 3
+    retry_delay = 10  # Seconds between retries
 
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CallbackQueryHandler(button_callback))
-    application.add_handler(PollAnswerHandler(receive_poll_answer))
+    for attempt in range(max_retries):
+        try:
+            application = Application.builder().token(token).build()
 
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+            application.add_handler(CommandHandler("start", start))
+            application.add_handler(CallbackQueryHandler(button_callback))
+            application.add_handler(PollAnswerHandler(receive_poll_answer))
+
+            application.run_polling(allowed_updates=Update.ALL_TYPES)
+            break  # Exit loop if polling starts successfully
+        except Conflict as e:
+            logger.error(f"Conflict detected: {e}. Retrying in {retry_delay} seconds... (Attempt {attempt + 1}/{max_retries})")
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay)
+            else:
+                logger.error("Max retries reached. Exiting.")
+                raise
 
 if __name__ == "__main__":
     main()
