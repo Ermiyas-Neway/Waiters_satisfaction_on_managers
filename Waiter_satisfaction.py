@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 # Google Sheets setup
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
-SPREADSHEET_ID = "YOUR_SPREADSHEET_ID"  # Replace with your Google Sheet ID
+SPREADSHEET_ID = "1W1HlZ4Pw377pekVlNWJu9wTXCV6zgqE3XWdt7OyixPQ"  # Replace with your Google Sheet ID
 RANGE_NAME = "Sheet1!A:D"  # Columns: Username, Branch, Answer, Timestamp
 
 # List of 30 branches (customize as needed)
@@ -121,7 +121,7 @@ async def receive_poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE
 def main():
     """Run the bot."""
     # Replace with your bot token
-    application = Application.builder().token("YOUR_BOT_TOKEN").build()
+    application = Application.builder().token("7760430928:AAFgCHYxnyLC3TKbJawWSPqfsb5KX5uig2g").build()
     
     # Add handlers
     application.add_handler(CommandHandler("start", start))
