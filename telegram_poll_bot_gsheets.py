@@ -76,12 +76,14 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         "ደህና ነኝ",
         "ደስተኛ አይደለሁም",
     ]
-    await query.message.reply_poll(
+    poll = await query.message.reply_poll(
         question=question,
         options=options,
         is_anonymous=False,
         allows_multiple_answers=False,
     )
+    # Store poll options for later use
+    context.bot_data[poll.poll.id] = {i: option for i, option in enumerate(options)}
 
 async def receive_poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle poll answers and append to Google Sheet."""
