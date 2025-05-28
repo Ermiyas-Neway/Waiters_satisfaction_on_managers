@@ -82,8 +82,11 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         is_anonymous=False,
         allows_multiple_answers=False,
     )
-    # Store poll options for later use
-    context.bot_data[poll.poll.id] = {i: option for i, option in enumerate(options)}
+    # Store poll options and creation time
+    context.bot_data[poll.poll.id] = {
+        "options": {i: option for i, option in enumerate(options)},
+        "created_at": datetime.now(timezone(timedelta(hours=3))).strftime("%Y-%m-%d %H:%M:%S")
+    }
 
 async def receive_poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle poll answers and append to Google Sheet."""
@@ -94,10 +97,12 @@ async def receive_poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE
     branch = context.user_data.get("branch", "Unknown")
 
     username = user.username if user.username else str(user.id)
-    selected_answer = context.bot_data.get(poll_id, {}).get(option_ids[0], "Unknown")
-    timestamp = update.effective_message.date.astimezone(
-        timezone(timedelta(hours=3))
-    ).strftime("%Y-%m-%d %H:%M:%S")  # EAT (UTC+3)
+    selected_answer = context.bot_data.get(poll_id, {}).get("options", {}).get(option_ids[0], "Unknown")
+    
+    # Use poll creation time or current time in EAT if effective_message is None
+    timestamp = context.bot_data.get(poll_id, {}).get("created_at")
+    if not timestamp:
+        timestamp = datetime.now(timezone(timedelta(hours=3))).strftime("%Y-%m-%d %H:%M:%S")
 
     # Append to Google Sheet
     try:
