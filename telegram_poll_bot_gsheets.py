@@ -57,7 +57,12 @@ def get_sheets_service():
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message with branch selection buttons when /start is issued."""
-    branches = [f"Branch {i}" for i in range(1, 31)]  # 30 branches
+    branches = ['Adama German', 'Addisu Gebya', 'Airport','Betel Adebaby','Betel  Bicha Foq','Bishoftu',
+               'Bole DH', 'Bulbula Medhanialem', 'Bole Oromiya', 'Bole Medhanialem',
+               'Bulbula 93', 'ECA', 'Entoto Park', 'Grand Palace', 'Gulele Medhaniyalem',
+               'Gurdshola', 'Imperial', 'Jemo', 'Kality Sheger', 'Kera', 'Lancha',
+               'Lebu', 'Megenaga', 'Mexico', 'Old Airport', 'Sarbet', 'Semen Hotel',
+               'Torhailoch', 'Semit Figa']  # 30 branches
     keyboard = [
         [InlineKeyboardButton(branch, callback_data=branch)] for branch in branches
     ]
